@@ -36,7 +36,6 @@
 #endif
 
 static uint16_t rcValue[IBUS_MAXCHANNELS];
-static uint16_t rcValueSafe[IBUS_MAXCHANNELS]; // read by interrupt handler. Data copied here in cli/sei block
 volatile int values[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static uint8_t ibusIndex = 0;
