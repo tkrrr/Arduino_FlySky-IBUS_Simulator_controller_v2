@@ -1,0 +1,182 @@
+/*
+   FlySky IBUS Arduino receiver with HID output
+   based on: https://github.com/Slattsveen/Arduino_FlySky-IBUS_Simulator_controller
+   v3b: 
+    -upgraded to 10 channels
+    -changed the joystick type as the one used in the original project didn´t work on all systems
+    -changed the way ibus is read, now reading 10 channels and using checksum (code from https://github.com/povlhp/iBus2PPM)
+    
+   Channels:
+   #0 - Roll
+   #1 - Pitch
+   #2 - Throttle
+   #3 - Yaw
+   #4 - Aux 1
+   #5 - Aux 2
+   #6 - Aux 3
+   #7 - Aux 4
+   #8 - Aux 5
+   #9 - Aux 6
+*/
+
+#include <SoftwareSerial.h>
+#include "FlySkyIBus.h"
+#include <Joystick.h>
+
+#define IBUS_BUFFSIZE 32    // Max iBus packet size (2 byte header, 14 channels x 2 bytes, 2 byte checksum)
+#define IBUS_MAXCHANNELS 14                                                                                                                                     
+
+
+//#define debugLvl 1
+#if defined (debugLvl)
+  static uint32_t countGood =0;
+  static uint32_t countBad = 0;
+  static long lastGoodFrameTime = 0 ;
+  static long currentFrameTime = 0;
+#endif
+
+static uint16_t rcValue[IBUS_MAXCHANNELS];
+static uint16_t rcValueSafe[IBUS_MAXCHANNELS]; // read by interrupt handler. Data copied here in cli/sei block
+volatile int values[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+static uint8_t ibusIndex = 0;
+static uint8_t ibus[IBUS_BUFFSIZE] = {0};
+
+
+// Joystick setup details
+Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID, 
+  JOYSTICK_TYPE_GAMEPAD, 32, 0,
+  true, true, false, false, false, false,
+  true, true, false, false, false);
+
+void setup()
+{
+  Joystick.begin(true);
+  #if defined (debugLvl)
+    Serial.begin(115200); // for debuging
+  #endif  
+  Serial1.begin(115200);  // for IBUS
+  Joystick.setXAxisRange(0, 1023);
+  Joystick.setYAxisRange(0, 1023);
+  Joystick.setThrottleRange(0, 1023);
+  Joystick.setRudderRange(0, 1023);
+}
+
+void loop()
+{
+  readRx();
+}
+
+void readRx()
+{
+  uint8_t i;
+  uint16_t chksum, rxsum;
+
+  uint8_t avail = Serial1.available();
+  
+  if (avail)
+  {
+    uint8_t val = Serial1.read();
+    
+    // Look for 0x2040 as start of packet
+    if (ibusIndex == 0 && val != 0x20) {
+      #if defined (debugLvl)   
+        if (debugLvl > 3)
+          {
+            Serial.println("Index:0,Val!=0x20");
+          }  
+      #endif
+      return;
+    }
+    if (ibusIndex == 1 && val != 0x40) {
+      #if defined (debugLvl)   
+        if (debugLvl > 3)
+          {
+            Serial.println("Index:0");
+          }  
+        #endif
+      ibusIndex = 0;
+      return;
+    }
+ 
+    if (ibusIndex < IBUS_BUFFSIZE) ibus[ibusIndex] = val;
+    ibusIndex++;
+    if (ibusIndex == IBUS_BUFFSIZE)
+    {
+      ibusIndex = 0;
+      chksum = 0xFFFF;
+      for (i = 0; i < 30; i++)
+      {  
+        chksum -= ibus[i];
+      } 
+      rxsum = ibus[30] + (ibus[31] << 8);
+      if (chksum == rxsum)
+      {
+        //Unrolled loop  for 10 channels - no need to copy more than needed.
+        // MODIFY IF MORE CHANNELS NEEDED
+        rcValue[0] = (ibus[ 3] << 8) + ibus[ 2];
+        rcValue[1] = (ibus[ 5] << 8) + ibus[ 4];
+        rcValue[2] = (ibus[ 7] << 8) + ibus[ 6];
+        rcValue[3] = (ibus[ 9] << 8) + ibus[ 8];
+        rcValue[4] = (ibus[11] << 8) + ibus[10];
+        rcValue[5] = (ibus[13] << 8) + ibus[12];
+        rcValue[6] = (ibus[15] << 8) + ibus[14];
+        rcValue[7] = (ibus[17] << 8) + ibus[16];
+        rcValue[8] = (ibus[19] << 8) + ibus[18];
+        rcValue[9] = (ibus[21] << 8) + ibus[20];
+
+        // Map switch positions to JoystickButton states
+        values[0] = map(rcValue[0], 1000, 2000, 0, 1023);      //Ch 1  Roll
+        values[1] = map(rcValue[1], 1000, 2000, 0, 1023);      //Ch 2  Pitch
+        values[2] = map(rcValue[2], 1000, 2000, 0, 1023);      //Ch 3  Throttle
+        values[3] = map(rcValue[3], 1000, 2000, 0, 1023);      //Ch 4  Yaw
+        values[4] = map(rcValue[4], 1000, 2000, 0, 1);        //Aux 1
+        values[5] = map(rcValue[5], 1000, 2000, 0, 1);        //Aux 2
+        values[6] = map(rcValue[6], 1000, 2000, 0, 2);        //Aux 3
+        values[7] = map(rcValue[7], 1000, 2000, 0, 1);        //Aux 4
+        values[8] = map(rcValue[8], 1000, 2000, 0, 127);      //Aux 5
+        values[9] = map(rcValue[9], 1000, 2000, 0, 127);      //Aux 6
+        
+        // Assign Joystick values to joystick object
+        Joystick.setXAxis(values[0]);
+        Joystick.setYAxis(values[1]);
+        Joystick.setThrottle(values[2]);
+        Joystick.setRudder(values[3]);
+        Joystick.setButton(0, values[4]);
+        Joystick.setButton(1, values[5]);
+        Joystick.setButton(2, values[6]);
+        Joystick.setButton(3, values[7]);
+        Joystick.setButton(4, values[8]);
+        Joystick.setButton(5, values[9]);
+
+        #if defined (debugLvl)
+            countGood = countGood +1 ;
+            Serial.print("OK, Time: " + String(currentFrameTime-lastGoodFrameTime) + "ms, ");
+            lastGoodFrameTime = currentFrameTime;
+            Serial.print("Q: "+ String(countGood*100 / (countGood+countBad)) + "%");
+            currentFrameTime =millis();
+            Serial.println("");
+            if (debugLvl > 2)
+            {
+                for (int i = 0; i < 10; i++) {
+                  Serial.print("V" + String(i) + ":");
+                  Serial.print(values[i]);
+                  Serial.print(";");
+                }
+                Serial.println("");
+            }
+        #endif
+      }
+      else
+      {
+        #if defined (debugLvl)   
+          countBad = countBad +1;
+          if (debugLvl > 1)
+          {
+            Serial.println("Checksum Error");
+          }  
+         #endif
+      }
+    }
+  }
+}
