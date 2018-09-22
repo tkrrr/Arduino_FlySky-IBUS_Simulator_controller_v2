@@ -5,7 +5,7 @@ https://github.com/Slattsveen/Arduino_FlySky-IBUS_Simulator_controller
 https://github.com/povlhp/iBus2PPM
 
 Following changes were made:
-- changed the joystick type as the one used in the original project didn´t work for me
+- changed the joystick type as the one used in the original project didn´t work on all systems
 - changed the way ibus is read, now reading 10 channels and using checksum (code from IBus2PPM project)
 
 Builds on the following libraries, they are needed for my sketch to work:
