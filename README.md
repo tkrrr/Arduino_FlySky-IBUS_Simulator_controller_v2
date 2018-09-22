@@ -3,7 +3,8 @@ This project uses an Arduino Micro to decode an IBUS signal and emulate a joysti
 The project is based on: 
 https://github.com/Slattsveen/Arduino_FlySky-IBUS_Simulator_controller
 https://github.com/povlhp/iBus2PPM
-I made following changes:
+
+Following changes were made:
 - changed the joystick type as the one used in the original project didn´t work for me
 - changed the way ibus is read, now reading 10 channels and using checksum (code from IBus2PPM project)
 
