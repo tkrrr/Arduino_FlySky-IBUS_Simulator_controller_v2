@@ -16,7 +16,7 @@ Builds on the following libraries, they are needed for my sketch to work:
 Components:
 - 1 Arduino micro (should work directly on a Leonardo as well, can probably be adapted to other models also)
 - 1 FlySky IBUS receiver (tested with the FlySky X6B)
-- FlySky radio controller (I use the FS-i6)
+- FlySky radio controller (tested with the FS-i6)
 
 Setting up: Use hardware Serial to read the incoming IBUS channel: RX=IBUS,VCC=5V,GND=GND
 
