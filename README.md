@@ -11,8 +11,7 @@ Following changes were made:
 
 Builds on the following libraries, they are needed for my sketch to work:
 - FlySky Ibus decoder by aanon4: https://github.com/aanon4/FlySkyIBus
-- Joystick library by Matthew Heironimus  - http://mheironimus.blogspot.no/2016/11/arduino-joystick-library-version-20.html 
-                                          - https://github.com/MHeironimus/ArduinoJoystickLibrary/tree/version-2.0
+- Joystick library by Matthew Heironimus  - http://mheironimus.blogspot.no/2016/11/arduino-joystick-library-version-20.html - https://github.com/MHeironimus/ArduinoJoystickLibrary/tree/version-2.0
 
 Components:
 - 1 Arduino micro (should work directly on a Leonardo as well, can probably be adapted to other models also)
