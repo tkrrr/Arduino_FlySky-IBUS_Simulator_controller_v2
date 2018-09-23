@@ -18,6 +18,6 @@ Components:
 - 1 FlySky IBUS receiver (tested with the FlySky X6B)
 - FlySky radio controller (tested with the FS-i6)
 
-Setting up: Use hardware Serial to read the incoming IBUS channel: RX=IBUS,VCC=5V,GND=GND
+Setting up: Use hardware serial to read the incoming IBUS channel: RX=IBUS,VCC=5V,GND=GND
 
 Disclaimer: I share this code with the community, I will not be developing it further unless I wish to change something for myself. Feel free to copy and modify as you wish.
