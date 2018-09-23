@@ -150,11 +150,11 @@ void readRx()
 
         #if defined (debugLvl)
             countGood = countGood +1 ;
+            currentFrameTime =millis();
             Serial.print("OK, Time: " + String(currentFrameTime-lastGoodFrameTime) + "ms, ");
             lastGoodFrameTime = currentFrameTime;
             Serial.print("Q: "+ String(countGood*100 / (countGood+countBad)) + "%");
-            currentFrameTime =millis();
-            Serial.println("");
+             Serial.println("");
             if (debugLvl > 2)
             {
                 for (int i = 0; i < 10; i++) {
