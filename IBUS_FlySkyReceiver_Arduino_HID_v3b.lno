@@ -149,12 +149,12 @@ void readRx()
         Joystick.setButton(5, values[9]);
 
         #if defined (debugLvl)
-            countGood = countGood +1 ;
             currentFrameTime =millis();
             Serial.print("OK, Time: " + String(currentFrameTime-lastGoodFrameTime) + "ms, ");
             lastGoodFrameTime = currentFrameTime;
+            countGood = countGood +1 ;
             Serial.print("Q: "+ String(countGood*100 / (countGood+countBad)) + "%");
-             Serial.println("");
+            Serial.println("");
             if (debugLvl > 2)
             {
                 for (int i = 0; i < 10; i++) {
